@@ -1191,11 +1191,9 @@ public class JsonReader implements Closeable {
       return result;
     }
 
+    updatePeekedStringAndPos(p);
     if (p == PEEKED_NUMBER) {
-      peekedString = new String(buffer, pos, peekedNumberLength);
-      pos += peekedNumberLength;
     } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-      peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
       try {
         result = Integer.parseInt(peekedString);
         peeked = PEEKED_NONE;
