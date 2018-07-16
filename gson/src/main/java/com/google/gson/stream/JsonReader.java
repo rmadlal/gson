@@ -976,13 +976,11 @@ public class JsonReader implements Closeable {
         } catch (NumberFormatException ignored) {
           // Fall back to parse as a double below.
         }
+      } else {
+        throw new IllegalStateException("Expected a long but was " + peek()
+                + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
       }
     }
-
-  /*} else {
-      throw new IllegalStateException("Expected a long but was " + peek()
-          + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
-    }*/
 
     if (result != null) {
       return result;
