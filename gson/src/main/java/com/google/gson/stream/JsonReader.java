@@ -955,17 +955,26 @@ public class JsonReader implements Closeable {
       return peekedLong;
     }
 
-    Long result;
     updatePeekedStringAndPos(p);
-    result = consumeAndGetLong(p);
 
-    if (result != null) {
-      return result;
+    if (p == PEEKED_NUMBER) {
+    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
+      try {
+        long result = Long.parseLong(peekedString);
+        peeked = PEEKED_NONE;
+        pathIndices[stackSize - 1]++;
+        return result;
+      } catch (NumberFormatException ignored) {
+        // Fall back to parse as a double below.
+      }
+    } else {
+      throw new IllegalStateException("Expected a long but was " + peek()
+              + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
     }
 
     peeked = PEEKED_BUFFERED;
     double asDouble = Double.parseDouble(peekedString); // don't catch this NumberFormatException.
-    result = (long) asDouble;
+    long result = (long) asDouble;
     if (result != asDouble) { // Make sure no precision was lost casting to 'long'.
       throw new NumberFormatException("Expected a long but was " + peekedString
           + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
@@ -983,24 +992,6 @@ public class JsonReader implements Closeable {
     } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
       peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
     }
-  }
-
-  private Long consumeAndGetLong(int p) throws IOException {
-    Long result = null;
-    if (p == PEEKED_NUMBER) {
-    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-      try {
-        result = Long.parseLong(peekedString);
-        peeked = PEEKED_NONE;
-        pathIndices[stackSize - 1]++;
-      } catch (NumberFormatException ignored) {
-        // Fall back to parse as a double below.
-      }
-    } else {
-      throw new IllegalStateException("Expected a long but was " + peek()
-              + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
-    }
-    return result;
   }
 
   /**
