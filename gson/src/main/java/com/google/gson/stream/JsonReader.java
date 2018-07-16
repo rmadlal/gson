@@ -955,32 +955,9 @@ public class JsonReader implements Closeable {
       return peekedLong;
     }
 
-    Long result = null;
-
-    slice: {
-      if (p == PEEKED_NUMBER) {
-        peekedString = new String(buffer, pos, peekedNumberLength);
-        pos += peekedNumberLength;
-      } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-        peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
-      }
-    }
-
-    co_slice: {
-      if (p == PEEKED_NUMBER) {
-      } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
-        try {
-          result = Long.parseLong(peekedString);
-          peeked = PEEKED_NONE;
-          pathIndices[stackSize - 1]++;
-        } catch (NumberFormatException ignored) {
-          // Fall back to parse as a double below.
-        }
-      } else {
-        throw new IllegalStateException("Expected a long but was " + peek()
-                + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
-      }
-    }
+    Long result;
+    updatePeekedStringAndPos(p);
+    result = consumeAndGetLong(p);
 
     if (result != null) {
       return result;
@@ -996,6 +973,33 @@ public class JsonReader implements Closeable {
     peekedString = null;
     peeked = PEEKED_NONE;
     pathIndices[stackSize - 1]++;
+    return result;
+  }
+
+  private void updatePeekedStringAndPos(int p) throws IOException {
+    if (p == PEEKED_NUMBER) {
+      peekedString = new String(buffer, pos, peekedNumberLength);
+      pos += peekedNumberLength;
+    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
+      peekedString = nextQuotedValue(p == PEEKED_SINGLE_QUOTED ? '\'' : '"');
+    }
+  }
+
+  private Long consumeAndGetLong(int p) throws IOException {
+    Long result = null;
+    if (p == PEEKED_NUMBER) {
+    } else if (p == PEEKED_SINGLE_QUOTED || p == PEEKED_DOUBLE_QUOTED) {
+      try {
+        result = Long.parseLong(peekedString);
+        peeked = PEEKED_NONE;
+        pathIndices[stackSize - 1]++;
+      } catch (NumberFormatException ignored) {
+        // Fall back to parse as a double below.
+      }
+    } else {
+      throw new IllegalStateException("Expected a long but was " + peek()
+              + " at line " + getLineNumber() + " column " + getColumnNumber() + " path " + getPath());
+    }
     return result;
   }
 
