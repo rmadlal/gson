@@ -157,7 +157,7 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
 
     // Create the node and add it to the tree or the table.
     Node<K, V> created = createNode(key, comparator, nearest);
-    updateTree(key, comparator, nearest, comparison, created);
+    updateTree(nearest, comparison, created);
     size++;
     modCount++;
 
@@ -179,11 +179,8 @@ public final class LinkedTreeMap<K, V> extends AbstractMap<K, V> implements Seri
     return created;
   }
 
-  private void updateTree(K key, Comparator<? super K> comparator, Node<K, V> nearest, int comparison, Node<K, V> created) {
+  private void updateTree(Node<K, V> nearest, int comparison, Node<K, V> created) {
     if (nearest == null) {
-      if (comparator == NATURAL_ORDER && !(key instanceof Comparable)) {
-        throw new ClassCastException(key.getClass().getName() + " is not Comparable");
-      }
       root = created;
     } else {
       if (comparison < 0) { // nearest.key is higher
